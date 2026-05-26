@@ -50,8 +50,8 @@ export function VenueDetailBody({ venue }: { venue: VenueDetail }) {
       <LocationBox venue={venue} />
       <HoursBox venue={venue} />
       <AboutBox text={venue.long_description} />
-      <DetailsBox venue={venue} />
       <LinksBox venue={venue} />
+      <DetailsBox venue={venue} />
       <ActionBar />
     </div>
   );
