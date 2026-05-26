@@ -694,11 +694,13 @@ function WelcomeCard({
       <p className="text-[10px] font-bold tracking-wider text-violet-400 uppercase">
         Welcome
       </p>
-      <p className="font-display text-foreground mt-1 text-xl font-semibold">
-        {discount.value}%
+      <p className="mt-1 flex items-baseline gap-1.5">
+        <span className="font-display text-foreground text-xl font-semibold">
+          {discount.value}%
+        </span>
+        <span className="text-muted-foreground text-xs">off</span>
       </p>
-      <p className="text-muted-foreground text-[11px]">off</p>
-      <p className="text-muted-foreground mt-1 text-[10px]">
+      <p className="text-muted-foreground mt-0.5 text-[10px]">
         {discount.subtitle}
       </p>
       <CardHoverAction label="Claim" variant="primary" />
@@ -724,9 +726,11 @@ function TierCard({
         <p className="text-[10px] font-bold tracking-wider text-white/85 uppercase">
           {TIER_PROPER[tier]}
         </p>
-        <p className="font-display mt-1 text-xl font-semibold">{value}%</p>
-        <p className="text-[11px] text-white/85">off</p>
-        <p className="mt-1 text-[10px] text-white/75">on every visit</p>
+        <p className="mt-1 flex items-baseline gap-1.5">
+          <span className="font-display text-xl font-semibold">{value}%</span>
+          <span className="text-xs text-white/85">off</span>
+        </p>
+        <p className="mt-0.5 text-[10px] text-white/75">on every visit</p>
         <CardHoverAction label="Manage class" variant="light" />
       </div>
     );
@@ -747,10 +751,12 @@ function TierCard({
       >
         {TIER_PROPER[tier]}
       </p>
-      <p className="font-display text-foreground mt-1 text-xl font-semibold">
-        {value}%
+      <p className="mt-1 flex items-baseline gap-1.5">
+        <span className="font-display text-foreground text-xl font-semibold">
+          {value}%
+        </span>
+        <span className="text-muted-foreground text-xs">off</span>
       </p>
-      <p className="text-muted-foreground text-[11px]">off</p>
       {relation === "higher" && (
         <CardHoverAction
           label={`Join ${TIER_PROPER[tier]}`}
