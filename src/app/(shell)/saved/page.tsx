@@ -5,6 +5,7 @@ import { Bookmark } from "lucide-react";
 import { VenueCatalogCard } from "@/components/consumer/VenueCatalogCard";
 import { SAVED_VENUES } from "@/lib/mock/saved-venues-mock";
 import { mockVenue } from "@/lib/mock/venue";
+import { enrichVenueWithMockOverview } from "@/lib/mock/enrich-overview";
 import { useSavedVenues } from "@/lib/saved-venues";
 import { toast } from "@/lib/toast";
 import type { Venue } from "@/lib/api/venues";
@@ -88,10 +89,14 @@ export default function SavedPage() {
   const catalog = useMemo(() => buildVenueCatalog(), []);
   const venues = useMemo<Venue[]>(() => {
     const ids = [...savedIds];
-    if (ids.length === 0) return SAVED_VENUES as Venue[];
+    if (ids.length === 0)
+      return SAVED_VENUES.map((v) =>
+        enrichVenueWithMockOverview(v as Venue, "catalog"),
+      );
     return ids
       .map((id) => catalog.get(id))
-      .filter((v): v is Venue => v != null);
+      .filter((v): v is Venue => v != null)
+      .map((v) => enrichVenueWithMockOverview(v, "catalog"));
   }, [savedIds, catalog]);
 
   function unsaveVenue(id: string) {
