@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   X,
@@ -16,7 +16,8 @@ import {
 import { VenueSwipeCardFace } from "@/components/consumer/VenueSwipeCardFace";
 import { ReservationSheet } from "@/components/consumer/ReservationSheet";
 import { FilterSheet } from "@/components/consumer/FilterSheet";
-import { cn } from "@/lib/utils";
+import { cn, haversineKm } from "@/lib/utils";
+import { useUserLocation, type Coords } from "@/lib/use-user-location";
 import type { Venue } from "@/lib/api/venues";
 
 const SWIPE_THRESHOLD = 64;
@@ -88,14 +89,25 @@ function Deck({ venues }: { venues: Venue[] }) {
     }
   };
 
+  // Real "X km" distances. The SSR deck fetch has no user location, so
+  // venues arrive without distance_km (the demo row carries a mock one).
+  // Once the browser hands us a fix we recompute each card's distance
+  // from its lat/lng — a real value always wins; venues missing coords
+  // (or a denied prompt) keep whatever distance they had, or none.
+  const coords = useUserLocation();
+  const located = useMemo(
+    () => (coords ? venues.map((v) => withUserDistance(v, coords)) : venues),
+    [venues, coords],
+  );
+
   // Past the last card the deck is exhausted — no silent wrap. Looping
   // back to the first card with a tiny flash was reading as "the last
   // card got stuck" because the same card kept reappearing on small
   // catalogs. An explicit "you're caught up" state with a restart CTA
   // is clearer.
-  const exhausted = idx >= venues.length;
-  const v = exhausted ? null : venues[idx];
-  const next = idx + 1 < venues.length ? venues[idx + 1] : null;
+  const exhausted = idx >= located.length;
+  const v = exhausted ? null : located[idx];
+  const next = idx + 1 < located.length ? located[idx + 1] : null;
 
   const advance = () => {
     setIdx((i) => i + 1);
@@ -369,6 +381,25 @@ function Deck({ venues }: { venues: Venue[] }) {
       <FilterSheet open={filtersOpen} onClose={() => setFiltersOpen(false)} />
     </div>
   );
+}
+
+// Recompute a venue's distance_km from the consumer's live position.
+// Returns the venue untouched when it has no usable coordinates, so a
+// real geolocated distance only ever replaces — never erases — what was
+// there. lat/lng ride along as PostgREST-serialized strings at runtime,
+// hence the coercion.
+function withUserDistance(venue: Venue, coords: Coords): Venue {
+  const lat = toCoord(venue.lat);
+  const lng = toCoord(venue.lng);
+  if (lat == null || lng == null) return venue;
+  const km = haversineKm(coords.lat, coords.lng, lat, lng);
+  const rounded = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
+  return { ...venue, distance_km: Math.max(rounded, 0.1) };
+}
+
+function toCoord(v: unknown): number | null {
+  const n = typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : null;
 }
 
 function ExhaustedDeck({ onRestart }: { onRestart: () => void }) {
