@@ -93,10 +93,11 @@ function Deck({ venues }: { venues: Venue[] }) {
   // venues arrive without distance_km (the demo row carries a mock one).
   // Once the browser hands us a fix we recompute each card's distance
   // from its lat/lng — a real value always wins; venues missing coords
-  // (or a denied prompt) keep whatever distance they had, or none.
+  // (or a denied prompt) keep whatever distance they had, or fall back
+  // to a "0 km" placeholder so the chip never just vanishes.
   const coords = useUserLocation();
   const located = useMemo(
-    () => (coords ? venues.map((v) => withUserDistance(v, coords)) : venues),
+    () => venues.map((v) => withUserDistance(v, coords)),
     [venues, coords],
   );
 
@@ -383,18 +384,25 @@ function Deck({ venues }: { venues: Venue[] }) {
   );
 }
 
-// Recompute a venue's distance_km from the consumer's live position.
-// Returns the venue untouched when it has no usable coordinates, so a
+// Resolve a venue's distance_km against the consumer's live position. A
 // real geolocated distance only ever replaces — never erases — what was
 // there. lat/lng ride along as PostgREST-serialized strings at runtime,
-// hence the coercion.
-function withUserDistance(venue: Venue, coords: Coords): Venue {
-  const lat = toCoord(venue.lat);
-  const lng = toCoord(venue.lng);
-  if (lat == null || lng == null) return venue;
-  const km = haversineKm(coords.lat, coords.lng, lat, lng);
-  const rounded = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
-  return { ...venue, distance_km: Math.max(rounded, 0.1) };
+// hence the coercion. When no distance can be computed (geolocation
+// pending/denied, or the venue carries no coordinates) we keep any
+// distance it already had, otherwise drop in a "0 km" placeholder so the
+// chip still renders. Real readings floor at 0.1 km, so "0 km" is
+// unambiguously the "couldn't calculate" case and never a true distance.
+function withUserDistance(venue: Venue, coords: Coords | null): Venue {
+  if (coords) {
+    const lat = toCoord(venue.lat);
+    const lng = toCoord(venue.lng);
+    if (lat != null && lng != null) {
+      const km = haversineKm(coords.lat, coords.lng, lat, lng);
+      const rounded = km < 10 ? Math.round(km * 10) / 10 : Math.round(km);
+      return { ...venue, distance_km: Math.max(rounded, 0.1) };
+    }
+  }
+  return venue.distance_km != null ? venue : { ...venue, distance_km: 0 };
 }
 
 function toCoord(v: unknown): number | null {
