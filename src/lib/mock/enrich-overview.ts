@@ -62,6 +62,7 @@ function withRealOverview(v: Venue): Venue {
   const priceLevel = num(row.price_level);
   const zone = str(row.zone) ?? str(row.city);
   const freshness = relativeLabel(str(row.enriched_at) ?? str(row.created_at));
+  const rewardCapCents = num(row.reward_cap_cents);
 
   // Only trust the live open/closed math when the row actually carries an
   // hours table — otherwise leave the fields null so the status chip hides
@@ -87,6 +88,12 @@ function withRealOverview(v: Venue): Venue {
     closes_at: (open?.closes_at || null) ?? v.closes_at ?? null,
     zone: v.zone ?? zone ?? null,
     last_updated_label: v.last_updated_label ?? freshness ?? null,
+    // The per-visit cashback ceiling (stored in cents) backs the promo
+    // chip's "Capped MX$… / visit" tooltip. The per-tier rate itself is
+    // resolved in PromoChip straight off the raw row columns.
+    reward_cap_mxn:
+      v.reward_cap_mxn ??
+      (rewardCapCents != null ? Math.round(rewardCapCents / 100) : null),
   };
 }
 
@@ -117,9 +124,12 @@ function enrichForDeck(v: Venue): Venue {
       is_first_visit: v.is_first_visit ?? mockVenue.promo_matrix.is_first_visit,
     };
   }
+  // Non-demo rows keep whatever real promo the row carries — PromoChip
+  // resolves the per-tier rate and hides itself when there's none. No
+  // forced mock cashback, so a web-listed place no longer shows a fake
+  // ribbon.
   return {
     ...v,
-    cashback_percent: v.cashback_percent ?? PROMO_MOCK_PERCENT,
     is_first_visit: v.is_first_visit ?? true,
   };
 }
