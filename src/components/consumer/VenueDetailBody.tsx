@@ -77,18 +77,28 @@ import type { Tier, VenueDetail } from "@/lib/mock/venue";
 // sticky action bar pins to the bottom of the scroll container.
 
 export function VenueDetailBody({ venue }: { venue: VenueDetail }) {
+  // Rewards are a Verified-Partner-only capability. Web-listed venues never
+  // offer rewards, so the whole Reward section AND its nav tab are hidden
+  // for them. Only Verified Partners reach RewardsBox; a partner that hasn't
+  // set a rate still shows the section with its "no reward yet" state.
+  const isPartner = venue.listing_type === "partner";
+  const navSections = NAV_SECTIONS.filter(
+    (s) => isPartner || s.id !== "rewards",
+  );
   return (
     // pb-4 gives the last section breathing room above whatever footer
     // (action bar / nav) the parent layout renders below the scroll area.
     <div className="flex flex-col gap-3 px-4 pb-4">
       <MediaBox venue={venue} />
-      <VenueSectionNav sections={[...NAV_SECTIONS]} />
+      <VenueSectionNav sections={[...navSections]} />
       <SectionAnchor id="overview">
         <SummaryHeader venue={venue} />
       </SectionAnchor>
-      <SectionAnchor id="rewards">
-        <RewardsBox venue={venue} />
-      </SectionAnchor>
+      {isPartner && (
+        <SectionAnchor id="rewards">
+          <RewardsBox venue={venue} />
+        </SectionAnchor>
+      )}
       <SectionAnchor id="about">
         <AboutBox text={venue.long_description} name={venue.name} />
       </SectionAnchor>

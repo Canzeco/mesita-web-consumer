@@ -130,13 +130,11 @@ function PlacesBody() {
   const venues = useMemo<Venue[]>(() => {
     const ids = [...savedIds];
     if (ids.length === 0)
-      return SAVED_VENUES.map((v) =>
-        enrichVenueOverview(v as Venue, "catalog"),
-      );
+      return SAVED_VENUES.map((v) => enrichVenueOverview(v as Venue));
     return ids
       .map((id) => catalog.get(id))
       .filter((v): v is Venue => v != null)
-      .map((v) => enrichVenueOverview(v, "catalog"));
+      .map((v) => enrichVenueOverview(v));
   }, [savedIds, catalog]);
 
   function unsaveVenue(id: string) {
