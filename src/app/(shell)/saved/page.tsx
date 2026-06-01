@@ -147,7 +147,7 @@ function PlacesBody() {
         removeSavedVenuePreview(id);
       }
     }
-  }, [liveCatalog, removeSavedVenuePreview, savedIds, setSaved]);
+  }, [liveCatalog, savedIds, setSaved]);
 
   function unsaveVenue(id: string) {
     const v = catalog.get(id);
