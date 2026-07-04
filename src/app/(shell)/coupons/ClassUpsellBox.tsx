@@ -86,7 +86,7 @@ export function ClassUpsellBox() {
           {
             icon: CreditCard,
             label: "Subscribe",
-            tagline: "$200 MXN / mo.",
+            tagline: "$100 MXN / mo.",
           },
           {
             icon: Mail,
