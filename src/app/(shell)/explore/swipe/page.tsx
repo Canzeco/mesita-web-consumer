@@ -20,7 +20,7 @@ export default async function ExploreSwipePage() {
     places = result.deck;
   } catch (err) {
     console.warn(
-      "[explore/swipe] consumer-recommend-swipe failed, falling back:",
+      "[explore/swipe] consumer-recommend-deck failed, falling back:",
       err,
     );
     try {
