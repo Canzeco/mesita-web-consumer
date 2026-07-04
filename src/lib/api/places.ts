@@ -175,7 +175,7 @@ export async function apiRecommendDeck(
 ): Promise<RecommendDeckResponse> {
   const data = await invokeEF<RecommendDeckResponse>(
     client,
-    "consumer-recommend-deck",
+    "consumer-recommend-swipe",
     input,
   );
   return { deck: data.deck.map(stripInsecurePhotos), summary: data.summary };
