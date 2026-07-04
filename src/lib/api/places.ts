@@ -121,6 +121,24 @@ type RecommendDeckResponse = {
   deck: Place[];
   summary: { candidates: number; embedded: number; intent?: string };
 };
+export type CatalogCategory = {
+  key: string;
+  label: string;
+  description: string;
+  emoji: string;
+  places: Place[];
+};
+type RecommendCatalogInput = {
+  lat?: number;
+  lng?: number;
+  radiusKm?: number;
+  maxCategories?: number;
+  perCategory?: number;
+};
+type RecommendCatalogResponse = {
+  categories: CatalogCategory[];
+  summary: { candidates: number; embedded?: number; categoryCount: number };
+};
 
 export async function apiFetchPublicPlaces(
   client: SupabaseClient,
@@ -157,12 +175,29 @@ export async function apiRecommendDeck(
 ): Promise<RecommendDeckResponse> {
   const data = await invokeEF<RecommendDeckResponse>(
     client,
-    "consumer-recommend-deck",
+    "consumer-recommend-swipe",
     input,
   );
   return { deck: data.deck.map(stripInsecurePhotos), summary: data.summary };
 }
 
+export async function apiRecommendCatalog(
+  client: SupabaseClient,
+  input: RecommendCatalogInput = {},
+): Promise<RecommendCatalogResponse> {
+  const data = await invokeEF<RecommendCatalogResponse>(
+    client,
+    "consumer-recommend-map",
+    input,
+  );
+  return {
+    categories: data.categories.map((c) => ({
+      ...c,
+      places: c.places.map(stripInsecurePhotos),
+    })),
+    summary: data.summary,
+  };
+}
 // Per-row status mirrored from atlas-suggest-places. Drives the badge
 // in the consumer search picker:
 //   - not_in_mesita: Google has it, Mesita doesn't — show "Not on
@@ -255,7 +290,7 @@ export async function apiCreatePlaceAsConsumerResult(
   try {
     const data = await invokeEF<ConsumerCreatePlaceResponse>(
       client,
-      "business-create-unit",
+      "business-create-project",
       { placeId },
       "Couldn't add that place right now.",
     );
