@@ -29,11 +29,14 @@ export function BottomSheetShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { open, requestClose } = useOverlayPresence(() => router.back());
+  const onModalRoute = isModalContractPath(pathname);
+  const { open, requestClose } = useOverlayPresence(() => router.back(), {
+    escapeEnabled: onModalRoute,
+  });
 
   // Stale-slot guard — see SlideOverShell: hides the sheet if a soft nav
   // from inside it moved the URL off the modal routes.
-  if (!isModalContractPath(pathname)) return null;
+  if (!onModalRoute) return null;
 
   return (
     <div className="pointer-events-auto absolute inset-0 z-50 flex flex-col justify-end overflow-hidden">

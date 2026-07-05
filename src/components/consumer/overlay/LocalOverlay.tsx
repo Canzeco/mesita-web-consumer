@@ -34,12 +34,15 @@ function useLocalPresence(open: boolean) {
   const [shown, setShown] = useState(false);
 
   useEffect(() => {
+    // All state flips happen inside rAF/timeout callbacks (never in the
+    // effect body — react-hooks/set-state-in-effect). On open that also
+    // gives the double-rAF beat: mount the closed frame first or the enter
+    // transition gets batched away and the overlay pops (see
+    // overlay-presence.ts).
     if (open) {
-      setMounted(true);
-      // Double rAF: paint the closed frame first or the enter transition
-      // gets batched away and the overlay pops (see overlay-presence.ts).
       let second = 0;
       const first = requestAnimationFrame(() => {
+        setMounted(true);
         second = requestAnimationFrame(() => setShown(true));
       });
       return () => {
@@ -47,9 +50,12 @@ function useLocalPresence(open: boolean) {
         cancelAnimationFrame(second);
       };
     }
-    setShown(false);
+    const raf = requestAnimationFrame(() => setShown(false));
     const t = window.setTimeout(() => setMounted(false), OVERLAY_MS);
-    return () => window.clearTimeout(t);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.clearTimeout(t);
+    };
   }, [open]);
 
   return { mounted, shown };
@@ -71,7 +77,12 @@ function useEscape(active: boolean, onClose: () => void) {
 function useCardContainer() {
   const [el, setEl] = useState<HTMLElement | null>(null);
   useEffect(() => {
-    setEl(document.getElementById(APP_CARD_ID));
+    // rAF keeps the setState out of the effect body (compiler lint); one
+    // frame of delay before the portal resolves is invisible.
+    const raf = requestAnimationFrame(() =>
+      setEl(document.getElementById(APP_CARD_ID)),
+    );
+    return () => cancelAnimationFrame(raf);
   }, []);
   return el;
 }

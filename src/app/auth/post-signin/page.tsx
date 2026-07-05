@@ -42,5 +42,7 @@ export default async function PostSigninPage({
     console.error("[post-signin] consumer-signin-phone:", err);
   }
   if (explicitNext) redirect(explicitNext);
-  redirect(consumerResult?.onboarded ? CONSUMER_ROUTES.home : CONSUMER_ROUTES.onboard);
+  redirect(
+    consumerResult?.onboarded ? CONSUMER_ROUTES.home : CONSUMER_ROUTES.onboard,
+  );
 }

@@ -39,14 +39,17 @@ export function useSlideOverClose() {
 export function SlideOverShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { open, requestClose } = useOverlayPresence(() => router.back());
+  const onModalRoute = isModalContractPath(pathname);
+  const { open, requestClose } = useOverlayPresence(() => router.back(), {
+    escapeEnabled: onModalRoute,
+  });
 
   // Stale-slot guard: Next.js keeps an unmatched @modal slot's last active
   // state on soft navigation, so a router.push() fired from inside the modal
   // (toast "View", reward links) would leave this panel painted over the new
   // page. If the URL no longer belongs to a modal route, render nothing.
   // Browser-back to the modal URL restores the slot — and this un-hides.
-  if (!isModalContractPath(pathname)) return null;
+  if (!onModalRoute) return null;
 
   return (
     <div className="pointer-events-auto absolute inset-0 z-50 overflow-hidden">
