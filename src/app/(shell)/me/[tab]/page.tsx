@@ -5,7 +5,7 @@ import { CONSUMER_ROUTES } from "@/lib/consumer-route-contract";
 export const dynamic = "force-dynamic";
 
 function profileTabFromSegment(seg: string): ProfileTab | null {
-  if (seg === "plan") return "plan";
+  if (seg === "class") return "class";
   if (seg === "settings") return "settings";
   return null;
 }
@@ -17,6 +17,6 @@ export default async function MeTabPage({
 }) {
   const { tab: tabSegment } = await params;
   const tab = profileTabFromSegment(tabSegment);
-  if (!tab) redirect(CONSUMER_ROUTES.me.plan);
+  if (!tab) redirect(CONSUMER_ROUTES.me.class);
   return <ProfileClient initialTab={tab} />;
 }

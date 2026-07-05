@@ -31,7 +31,7 @@ export const CONSUMER_ROUTES = {
     global: "/inbox/global",
   },
   me: {
-    plan: "/me/plan",
+    class: "/me/class",
     settings: "/me/settings",
   },
   legacy: {

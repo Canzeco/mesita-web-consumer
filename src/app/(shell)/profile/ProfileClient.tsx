@@ -22,8 +22,8 @@ import {
   VerifySocialSheet,
   type SocialPlatform,
 } from "@/components/consumer/VerifySocialSheet";
-import { TIERS, tierBadgeClass } from "@/lib/consumer-data";
-import { useMembership } from "@/lib/membership-context";
+import { CLASSES, classBadgeClass } from "@/lib/consumer-data";
+import { useConsumerClass } from "@/lib/class-context";
 import { cn, errMsg } from "@/lib/utils";
 import { toast } from "@/lib/toast";
 import { CONSUMER_ROUTES } from "@/lib/consumer-route-contract";
@@ -39,10 +39,10 @@ import {
 // The Coupons tab was removed —
 // coupons are "hidden" (users save the place, redeem a QR at the place),
 // so the wallet surface didn't earn its spot in the Profile.
-export type ProfileTab = "plan" | "settings";
+export type ProfileTab = "class" | "settings";
 
 const TABS: { id: ProfileTab; label: string; href: string }[] = [
-  { id: "plan", label: "Plan", href: CONSUMER_ROUTES.me.plan },
+  { id: "class", label: "Class", href: CONSUMER_ROUTES.me.class },
   { id: "settings", label: "Settings", href: CONSUMER_ROUTES.me.settings },
 ];
 
@@ -64,9 +64,9 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
   );
 
   // Post-checkout landing. The subscribe flow redirects to
-  // /me/plan?subscription=success once the membership grant lands (instant in
+  // /me/class?subscription=success once the class grant lands (instant in
   // the demo mock, post-webhook with real Stripe). Confirm it with a toast;
-  // the full page load already re-seeded the real Premium membership upstream.
+  // the full page load already re-seeded the real Premium class upstream.
   // Read straight off the URL (client-only, fires once) rather than
   // useSearchParams, so the page carries no prerender-bailout requirement.
   useEffect(() => {
@@ -107,7 +107,7 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
       </div>
 
       <div className="scrollbar-hide flex-1 overflow-y-auto">
-        {tab === "plan" && (
+        {tab === "class" && (
           <div className="px-5 pt-5 pb-8">
             <ClassTab onConnectSocial={(p) => setVerifyPlatform(p)} />
           </div>
@@ -139,7 +139,7 @@ function ClassTab({
   return (
     <div className="flex flex-col gap-6">
       <section className="flex flex-col gap-2">
-        <SectionEyebrow>Current plan</SectionEyebrow>
+        <SectionEyebrow>Current class</SectionEyebrow>
         <CurrentClassCard />
       </section>
       <section className="flex flex-col gap-2">
@@ -147,7 +147,7 @@ function ClassTab({
         <FreeVsPremium />
       </section>
       <section className="flex flex-col gap-2">
-        <SectionEyebrow>Plans</SectionEyebrow>
+        <SectionEyebrow>Classes</SectionEyebrow>
         <WaysToClimb onConnectSocial={onConnectSocial} />
       </section>
     </div>
@@ -254,9 +254,9 @@ function WaysToClimb({
 }: {
   onConnectSocial: (platform: SocialPlatform) => void;
 }) {
-  const premium = TIERS.find((t) => t.id === "premium")!;
-  const { tier, origin, followers } = useMembership();
-  const isFree = tier === "free";
+  const premium = CLASSES.find((c) => c.id === "premium")!;
+  const { key, origin, followers } = useConsumerClass();
+  const isFree = key === "free";
 
   const cards: ClimbCardData[] = [
     {
@@ -268,7 +268,7 @@ function WaysToClimb({
       priceNote: "always free",
       desc: "Your default account at no cost. Get a base discount at Verified Partners, standard recommendations, and book up to 2 reservations every month.",
       reached: isFree,
-      reachedLabel: "Current plan",
+      reachedLabel: "Current class",
       note: isFree ? undefined : "Included in every account",
     },
     {
@@ -441,13 +441,13 @@ function ClimbCard({ data }: { data: ClimbCardData }) {
 }
 
 function CurrentClassCard() {
-  // Current-plan banner — plan name + an origin icon and a short "via …"
+  // Current-class banner — class name + an origin icon and a short "via …"
   // line so a Premium member sees how they got it (Instagram / subscription
   // / invitation). No follower count — just the door.
-  const { tier, origin } = useMembership();
-  const meta = TIERS.find((t) => t.id === tier)!;
+  const { key, origin } = useConsumerClass();
+  const meta = CLASSES.find((c) => c.id === key)!;
   const brand = `Mesita ${meta.label}`;
-  const isPremium = tier === "premium";
+  const isPremium = key === "premium";
   const { Icon, via } = (() => {
     if (!isPremium) return { Icon: Smile, via: null as string | null };
     switch (origin) {
@@ -465,7 +465,7 @@ function CurrentClassCard() {
     <div
       className={cn(
         "flex items-center gap-3 rounded-2xl px-4 py-4 shadow-sm",
-        tierBadgeClass(tier),
+        classBadgeClass(key),
       )}
     >
       <span
