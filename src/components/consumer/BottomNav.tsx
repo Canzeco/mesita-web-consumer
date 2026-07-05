@@ -56,7 +56,7 @@ const ITEMS: Item[] = [
     match: CONSUMER_RESERVATION_SURFACE_PREFIX,
   },
   {
-    href: CONSUMER_ROUTES.me.plan,
+    href: CONSUMER_ROUTES.me.class,
     Icon: User,
     label: "Profile",
     match: CONSUMER_ROUTE_PREFIX.me,
