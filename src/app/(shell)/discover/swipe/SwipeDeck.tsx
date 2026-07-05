@@ -11,10 +11,10 @@ import {
   RotateCcw,
   Hand,
   Store,
-  Loader2,
   CalendarCheck,
   SlidersHorizontal,
 } from "lucide-react";
+import { Spinner } from "@/components/shared";
 import { PlaceSwipeCardFace } from "@/components/consumer/PlaceSwipeCardFace";
 import { SWIPE_CARD_CLIP } from "@/components/consumer/swipe-card-styles";
 import { FilterSheet } from "@/components/consumer/FilterSheet";
@@ -679,7 +679,7 @@ function ExhaustedDeck({
       >
         {restarting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
+            <Spinner size="sm" className="border-white/40 border-t-white" />
             Loading...
           </>
         ) : (
