@@ -272,7 +272,7 @@ function ProfileHero({
           <Stat
             value={compact(savedIds.size)}
             label="Saved"
-            href={CONSUMER_ROUTES.saved.places}
+            href={CONSUMER_ROUTES.favorites}
           />
           <Stat
             value={compact(reservationsUsed)}
