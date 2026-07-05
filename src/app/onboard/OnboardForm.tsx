@@ -7,6 +7,7 @@ import { COUNTRIES } from "@/lib/consumer-data";
 import { useBrowserSupabase } from "@/lib/supabase/browser";
 import { apiUpdateConsumerProfile } from "@/lib/api/profile";
 import { errMsg } from "@/lib/utils";
+import { CONSUMER_ROUTES } from "@/lib/consumer-route-contract";
 import { Field } from "@/components/shared";
 import {
   ERROR_BOX_CLASS,
@@ -59,7 +60,7 @@ export function OnboardForm() {
           birthday,
           country,
         });
-        router.push("/explore/swipe");
+        router.push(CONSUMER_ROUTES.home);
         router.refresh();
       } catch (err) {
         setError(errMsg(err, "Couldn't save. Try again."));
