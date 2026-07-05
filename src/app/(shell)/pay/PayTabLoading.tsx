@@ -45,15 +45,22 @@ export function PayTicketListSkeleton() {
 }
 
 export function PayTabLoading() {
+  // Tab-AGNOSTIC on purpose: this fires for both /pay/qr and /pay/tickets
+  // (route loading.tsx can't see the segment param, and the dynamic()
+  // fallback covers whichever tab is mounting), so the silhouette is a
+  // neutral content card — not the QR square — to avoid promising the wrong
+  // tab's layout. The per-tab skeletons (PayTicketListSkeleton, the QR card)
+  // take over once the client mounts.
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col px-4 pt-4 pb-6">
       {/* Segment control */}
       <Skeleton className="h-10 rounded-full" />
-      {/* QR passport card (the default tab) */}
-      <div className="border-border bg-card mt-4 flex flex-col items-center gap-3 rounded-2xl border p-5">
-        <Skeleton className="h-40 w-40 rounded-xl" />
-        <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-3 w-24" />
+      {/* Neutral content card */}
+      <div className="border-border bg-card mt-4 flex flex-col gap-3 rounded-2xl border p-5">
+        <Skeleton className="h-5 w-1/2" />
+        <Skeleton className="h-28 rounded-xl" />
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="h-4 w-1/3" />
       </div>
     </div>
   );

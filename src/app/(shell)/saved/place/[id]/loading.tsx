@@ -1,4 +1,4 @@
-import { DetailBodySkeleton } from "@/components/consumer/overlay/DetailSkeletons";
+import { PlaceBodySkeleton } from "@/components/consumer/overlay/DetailSkeletons";
 import { Skeleton } from "@/components/shared/Skeleton";
 
 // Hard-nav place page: in-band skeleton in the shell body (chrome stays put).
@@ -10,7 +10,7 @@ export default function PlacePageLoading() {
         <Skeleton className="mx-auto h-4 w-32" />
         <Skeleton className="h-9 w-9 rounded-lg" />
       </div>
-      <DetailBodySkeleton />
+      <PlaceBodySkeleton />
     </div>
   );
 }

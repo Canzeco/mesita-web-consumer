@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import {
   OVERLAY_EASE,
-  OVERLAY_MS,
+  overlayExitMs,
 } from "@/components/consumer/overlay/overlay-presence";
 import { APP_CARD_ID } from "@/components/consumer/MobileFrame";
 
@@ -51,7 +51,7 @@ function useLocalPresence(open: boolean) {
       };
     }
     const raf = requestAnimationFrame(() => setShown(false));
-    const t = window.setTimeout(() => setMounted(false), OVERLAY_MS);
+    const t = window.setTimeout(() => setMounted(false), overlayExitMs());
     return () => {
       cancelAnimationFrame(raf);
       window.clearTimeout(t);

@@ -41,7 +41,7 @@ export function SlideOverShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const onModalRoute = isModalContractPath(pathname);
   const { open, requestClose } = useOverlayPresence(() => router.back(), {
-    escapeEnabled: onModalRoute,
+    active: onModalRoute,
   });
 
   // Stale-slot guard: Next.js keeps an unmatched @modal slot's last active
