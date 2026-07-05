@@ -175,10 +175,11 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
         open={verifyPlatform !== null}
         onClose={() => setVerifyPlatform(null)}
       />
-      {editOpen && profile && (
+      {profile && (
         <EditProfileSheet
           profile={profile}
           email={email}
+          open={editOpen}
           onClose={() => setEditOpen(false)}
           onSaved={(updated) => setProfile(updated)}
         />
