@@ -267,7 +267,9 @@ export function SearchClient({
     // At the far-right end the last card is fully visible but scrollLeft never
     // reaches (n-1)·stride, so Math.round caps one short (shows n-1/n). Snap to
     // the last index once the container is scrolled to its end.
-    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
+    const overflowing = el.scrollWidth > el.clientWidth;
+    const atEnd =
+      overflowing && el.scrollLeft + el.clientWidth >= el.scrollWidth - 4;
     const idx = atEnd
       ? visible.length - 1
       : Math.round(el.scrollLeft / RAIL_STRIDE);
@@ -317,7 +319,10 @@ export function SearchClient({
             <input
               value={query}
               onChange={(e) => updateQuery(e.target.value)}
-              onFocus={() => setSearchOpen(true)}
+              onFocus={() => {
+                setAiOpen(false);
+                setSearchOpen(true);
+              }}
               placeholder="Search places…"
               className="placeholder:text-muted-foreground min-w-0 flex-1 bg-transparent text-sm outline-none"
             />
