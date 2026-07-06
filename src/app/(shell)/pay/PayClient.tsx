@@ -51,11 +51,17 @@ export function PayClient({
     <div className="flex h-full min-h-0 flex-1 flex-col">
       <div className="px-4 pt-4">
         <RewardsInfoBanner />
-        <div className="segment-control mt-3 grid grid-cols-2 gap-0">
+        <div
+          role="tablist"
+          aria-label="Rewards views"
+          className="segment-control mt-3 grid grid-cols-2 gap-0"
+        >
           {TABS.map((t) => (
             <button
               key={t.id}
               type="button"
+              role="tab"
+              aria-selected={tab === t.id}
               onClick={() => selectTab(t.id)}
               className={cn(
                 "segment-tab text-[11px] leading-tight sm:text-[12px]",
@@ -80,7 +86,10 @@ export function PayClient({
         </div>
       </div>
 
-      <div className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-6">
+      <div
+        role="tabpanel"
+        className="scrollbar-hide min-h-0 flex-1 overflow-y-auto px-4 pt-3 pb-6"
+      >
         {tab === "tickets" ? (
           <PayTickets userId={userId} />
         ) : (

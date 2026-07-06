@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-  useSyncExternalStore,
-  Fragment,
-  type ReactNode,
-} from "react";
+import { useCallback, useEffect, useState, Fragment, type ReactNode } from "react";
 import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import {
@@ -20,6 +13,7 @@ import {
   HelpCircle,
   Instagram,
   Mail,
+  RefreshCw,
   Smile,
   Trash2,
 } from "lucide-react";
@@ -58,6 +52,16 @@ const TABS: { id: ProfileTab; label: string; href: string }[] = [
   { id: "settings", label: "Settings", href: CONSUMER_ROUTES.me.settings },
 ];
 
+// Demo affordances (the class-preview toggle) render only when the build opts
+// in via NEXT_PUBLIC_MESITA_DEMO=1 — demo/preview deploys, never production.
+// Inlined at build time; a plain string compare so tree-shaking can drop the
+// toggle from prod bundles.
+const DEMO_ENABLED = process.env.NEXT_PUBLIC_MESITA_DEMO === "1";
+
+// App version shown in Settings. Sourced from the build env (wired to the
+// package version in CI) so a release doesn't require editing this string.
+const APP_VERSION = process.env.NEXT_PUBLIC_APP_VERSION ?? "2.4.1";
+
 export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
   const tab = initialTab;
   const supabase = useBrowserSupabase();
@@ -72,6 +76,19 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
   const [profile, setProfile] = useState<ConsumerProfile | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  // Distinct from the toast: when the very first load fails we have nothing to
+  // show, so the page renders an inline retry panel instead of a hollow hero.
+  const [loadError, setLoadError] = useState(false);
+  // Bumped by the retry button to re-run the load effect. Reset of
+  // loading/error happens in the click handler (an event), keeping setState
+  // out of the effect body.
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const retryLoad = useCallback(() => {
+    setLoading(true);
+    setLoadError(false);
+    setReloadKey((k) => k + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -84,8 +101,12 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
         if (cancelled) return;
         setProfile(consumer);
         setEmail(authRes.data.user?.email ?? null);
+        setLoadError(false);
       } catch (e) {
-        if (!cancelled) toast(errMsg(e, "Couldn't load your profile."));
+        if (!cancelled) {
+          setLoadError(true);
+          toast(errMsg(e, "Couldn't load your profile."));
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -93,7 +114,7 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
     return () => {
       cancelled = true;
     };
-  }, [supabase]);
+  }, [supabase, reloadKey]);
 
   // Post-checkout landing. The subscribe flow redirects to
   // /me/class?subscription=success once the membership grant lands (instant in
@@ -125,40 +146,52 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
           onEditProfile={() => setEditOpen(true)}
         />
 
-        {/* Tab bar pins under the top chrome while the hero scrolls away. */}
-        <div className="bg-background/95 sticky top-0 z-20 px-4 pt-3 pb-2 backdrop-blur">
-          <div className="border-border bg-card flex rounded-lg border p-1">
-            {TABS.map((t) => (
-              <Link
-                key={t.id}
-                href={t.href}
-                scroll={false}
-                className={cn(
-                  "flex-1 rounded-md px-2 py-1.5 text-center text-[12px] font-medium whitespace-nowrap transition",
-                  tab === t.id
-                    ? "bg-foreground text-background"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
+        {loadError && !profile && !loading ? (
+          <ProfileLoadError onRetry={retryLoad} />
+        ) : (
+          <>
+            {/* Tab bar pins under the top chrome while the hero scrolls away. */}
+            <div className="bg-background/95 sticky top-0 z-20 px-4 pt-3 pb-2 backdrop-blur">
+              <div
+                role="tablist"
+                aria-label="Profile sections"
+                className="border-border bg-card flex rounded-lg border p-1"
               >
-                {t.label}
-              </Link>
-            ))}
-          </div>
-        </div>
+                {TABS.map((t) => (
+                  <Link
+                    key={t.id}
+                    href={t.href}
+                    scroll={false}
+                    role="tab"
+                    aria-selected={tab === t.id}
+                    className={cn(
+                      "flex-1 rounded-md px-2 py-1.5 text-center text-[12px] font-medium whitespace-nowrap transition",
+                      tab === t.id
+                        ? "bg-foreground text-background"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
 
-        {tab === "class" && (
-          <div className="px-5 pt-3 pb-8">
-            <ClassTab onConnectSocial={(p) => setVerifyPlatform(p)} />
-          </div>
-        )}
-        {tab === "settings" && (
-          <div className="px-5 pt-3 pb-8">
-            <SettingsTab
-              profile={profile}
-              email={email}
-              onConnectSocial={(p) => setVerifyPlatform(p)}
-            />
-          </div>
+            {tab === "class" && (
+              <div role="tabpanel" className="px-5 pt-3 pb-8">
+                <ClassTab onConnectSocial={(p) => setVerifyPlatform(p)} />
+              </div>
+            )}
+            {tab === "settings" && (
+              <div role="tabpanel" className="px-5 pt-3 pb-8">
+                <SettingsTab
+                  profile={profile}
+                  email={email}
+                  onConnectSocial={(p) => setVerifyPlatform(p)}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -178,6 +211,33 @@ export function ProfileClient({ initialTab }: { initialTab: ProfileTab }) {
           onSaved={(updated) => setProfile(updated)}
         />
       )}
+    </div>
+  );
+}
+
+// ─── Load error ───────────────────────────────────────────────────────────
+
+// First-load failure has nothing real to show, so the page offers an inline
+// recovery instead of a toast that vanishes over a hollow hero.
+function ProfileLoadError({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="px-5 pt-6">
+      <div className="border-border bg-card rounded-2xl border px-4 py-8 text-center">
+        <p className="text-foreground text-sm font-semibold">
+          Couldn&apos;t load your profile.
+        </p>
+        <p className="text-muted-foreground mx-auto mt-1 max-w-[34ch] text-[12.5px] leading-relaxed">
+          Check your connection and try again.
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="border-border bg-card hover:bg-muted mx-auto mt-4 inline-flex items-center gap-2 rounded-lg border px-5 py-2 text-sm font-semibold transition"
+        >
+          <RefreshCw className="h-4 w-4" />
+          Retry
+        </button>
+      </div>
     </div>
   );
 }
@@ -227,7 +287,8 @@ function ProfileHero({
     <header className="px-5 pt-5">
       {/* Avatar beside the identity block — no vanity counters. */}
       <div className="flex items-center gap-4">
-        {/* Story-ring avatar: class-tinted gradient ring around initials. */}
+        {/* Story-ring avatar: class-tinted gradient ring around the photo, or
+            initials when there's no avatar_url yet. */}
         <div
           className={cn(
             "shrink-0 rounded-full p-[2.5px]",
@@ -235,10 +296,21 @@ function ProfileHero({
           )}
         >
           <div className="bg-background rounded-full p-[2.5px]">
-            <div className="bg-muted flex h-[68px] w-[68px] items-center justify-center rounded-full">
-              <span className="font-display text-foreground/70 text-xl font-bold tracking-tight">
-                {initials}
-              </span>
+            <div className="bg-muted h-[68px] w-[68px] overflow-hidden rounded-full">
+              {profile?.avatar_url ? (
+                // Plain img: avatar is a remote user upload; next/image config
+                // for the storage host lands with the upload EF.
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={profile.avatar_url}
+                  alt={name}
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="font-display text-foreground/70 flex h-full w-full items-center justify-center text-xl font-bold tracking-tight">
+                  {initials}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -297,7 +369,7 @@ function ClassTab({
   // Premium comparison, and the ways to join Premium.
   return (
     <div className="flex flex-col gap-6">
-      <ClassPreviewToggle />
+      {DEMO_ENABLED && <ClassPreviewToggle />}
       <section className="flex flex-col gap-2">
         <SectionEyebrow>Current class</SectionEyebrow>
         <CurrentClassCard />
@@ -379,7 +451,7 @@ function ClassPreviewToggle() {
 
 function SectionEyebrow({ children }: { children: ReactNode }) {
   return (
-    <p className="text-foreground/60 text-[10px] font-semibold tracking-[0.16em] uppercase">
+    <p className="text-foreground/70 text-[10px] font-semibold tracking-[0.16em] uppercase">
       {children}
     </p>
   );
@@ -497,8 +569,7 @@ function WaysToClimb({
     {
       key: "instagram",
       icon: Instagram,
-      iconBg:
-        "bg-[linear-gradient(135deg,oklch(0.70_0.20_30),oklch(0.65_0.20_350))] text-white",
+      iconBg: "bg-instagram-gradient text-white",
       title: "Premium",
       via: "Instagram",
       accent: true,
@@ -552,7 +623,7 @@ function WaysToClimb({
 function InstagramConnectedSummary({ followers }: { followers: number }) {
   return (
     <div className="flex items-center gap-3.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.05] p-4">
-      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-[linear-gradient(135deg,oklch(0.70_0.20_30),oklch(0.65_0.20_350))] text-white shadow-sm">
+      <span className="bg-instagram-gradient flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl text-white shadow-sm">
         <Instagram className="h-5 w-5" />
       </span>
       <div className="min-w-0 flex-1">
@@ -721,11 +792,6 @@ function CurrentClassCard() {
 const MESITA_SUPPORT_EMAIL = "support@mesita.ai";
 const MESITA_PRIVACY_EMAIL = "privacy@mesita.ai";
 
-// Device-level notification flags. These persist in localStorage until the
-// push integration lands.
-const NOTIF_PUSH_KEY = "mesita:notif:push";
-const NOTIF_EMAIL_KEY = "mesita:notif:email";
-
 // Grouped, row-based settings — identity edits happen in the EditProfileSheet
 // (same one the hero button opens), socials connect inline, privacy + support
 // are direct contact links. No payment rows: there is no Mesita Pay / wallet.
@@ -788,18 +854,16 @@ function SettingsTab({
       </SettingsGroup>
 
       <SettingsGroup title="Notifications">
-        <StoredToggleRow
+        <ComingSoonRow
           Icon={Bell}
           tint="amber"
-          storageKey={NOTIF_PUSH_KEY}
           label="Push notifications"
           sub="Ticket updates and rewards"
         />
         <RowDivider />
-        <StoredToggleRow
+        <ComingSoonRow
           Icon={Mail}
           tint="violet"
-          storageKey={NOTIF_EMAIL_KEY}
           label="Email"
           sub="Receipts and news"
         />
@@ -841,7 +905,7 @@ function SettingsTab({
         className="border-border bg-card hover:bg-muted flex w-full items-center justify-center gap-2 rounded-2xl border py-4 text-sm font-semibold transition"
       />
       <p className="text-muted-foreground -mt-3 text-center text-[11px]">
-        Mesita · v2.4.1
+        Mesita · v{APP_VERSION}
       </p>
 
       <DeleteAccountSheet
@@ -888,8 +952,7 @@ type RowTint =
 const TINT_CLASSES: Record<RowTint, string> = {
   primary: "bg-primary/10 text-primary",
   muted: "bg-muted text-foreground/70",
-  instagram:
-    "bg-[linear-gradient(135deg,oklch(0.70_0.20_30),oklch(0.65_0.20_350))] text-white",
+  instagram: "bg-instagram-gradient text-white",
   emerald: "bg-emerald-500/10 text-emerald-600",
   amber: "bg-amber-500/10 text-amber-600",
   sky: "bg-sky-500/10 text-sky-600",
@@ -1024,128 +1087,34 @@ function SettingsLinkRow({
   );
 }
 
-// Device-persisted boolean flags. useSyncExternalStore keeps the hydration
-// render on the server snapshot (the default) so markup matches, then swaps
-// in the stored value — no setState-in-effect cascade. The local listener
-// set notifies same-tab subscribers on writes; the storage event covers
-// other tabs.
-const flagListeners = new Set<() => void>();
-
-function subscribeToFlags(onChange: () => void): () => void {
-  flagListeners.add(onChange);
-  window.addEventListener("storage", onChange);
-  return () => {
-    flagListeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
-  };
-}
-
-function readFlag(key: string, defaultOn: boolean): boolean {
-  try {
-    const stored = window.localStorage.getItem(key);
-    return stored == null ? defaultOn : stored === "1";
-  } catch {
-    return defaultOn;
-  }
-}
-
-function writeFlag(key: string, on: boolean) {
-  try {
-    window.localStorage.setItem(key, on ? "1" : "0");
-  } catch {
-    // best-effort persistence
-  }
-  flagListeners.forEach((l) => l());
-}
-
-function useStoredFlag(key: string, defaultOn: boolean): [boolean, () => void] {
-  const on = useSyncExternalStore(
-    subscribeToFlags,
-    () => readFlag(key, defaultOn),
-    () => defaultOn,
-  );
-  const toggle = useCallback(
-    () => writeFlag(key, !readFlag(key, defaultOn)),
-    [key, defaultOn],
-  );
-  return [on, toggle];
-}
-
-function Switch({ on, small }: { on: boolean; small?: boolean }) {
-  return (
-    <span
-      className={cn(
-        "relative shrink-0 rounded-full transition",
-        small ? "h-5 w-9" : "h-6 w-10",
-        on ? "bg-pink-gradient" : "bg-muted",
-      )}
-    >
-      <span
-        className={cn(
-          "absolute top-0.5 rounded-full bg-white shadow transition-all",
-          small ? "h-4 w-4" : "h-5 w-5",
-          on ? "left-[18px]" : "left-0.5",
-        )}
-      />
-    </span>
-  );
-}
-
-function ToggleRow({
+// Notification preferences have no push/email backend yet, so the rows read as
+// disabled "Coming soon" instead of live switches — an affordance that did
+// nothing (toggle Push off, still get notified) erodes trust. Swap back to a
+// real ToggleRow once the integration lands.
+function ComingSoonRow({
   Icon,
   tint,
   label,
   sub,
-  on,
-  onToggle,
 }: {
   Icon: LucideIcon;
   tint: RowTint;
   label: string;
   sub?: string;
-  on: boolean;
-  onToggle: () => void;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      role="switch"
-      aria-checked={on}
-      className="hover:bg-muted flex w-full items-center gap-3 px-4 py-3 text-left transition"
+    <div
+      aria-disabled
+      className="flex w-full items-center gap-3 px-4 py-3 opacity-60"
     >
       <IconCircle tint={tint}>
         <Icon className="h-[18px] w-[18px]" />
       </IconCircle>
       <RowText label={label} sub={sub} />
-      <Switch on={on} />
-    </button>
-  );
-}
-
-function StoredToggleRow({
-  Icon,
-  tint,
-  storageKey,
-  label,
-  sub,
-}: {
-  Icon: LucideIcon;
-  tint: RowTint;
-  storageKey: string;
-  label: string;
-  sub?: string;
-}) {
-  const [on, toggle] = useStoredFlag(storageKey, true);
-  return (
-    <ToggleRow
-      Icon={Icon}
-      tint={tint}
-      label={label}
-      sub={sub}
-      on={on}
-      onToggle={toggle}
-    />
+      <span className="border-border text-muted-foreground shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase">
+        Soon
+      </span>
+    </div>
   );
 }
 

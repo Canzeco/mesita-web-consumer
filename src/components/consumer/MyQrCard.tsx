@@ -34,8 +34,7 @@ function classPresentation(c: ConsumerClassState): {
       return {
         label: "Premium · Instagram",
         Glyph: Instagram,
-        glyphClass:
-          "bg-[linear-gradient(135deg,#feda75,#d62976_55%,#4f5bd5)] text-white",
+        glyphClass: "bg-instagram-gradient text-white",
       };
     case "invitation":
       return {
@@ -47,7 +46,7 @@ function classPresentation(c: ConsumerClassState): {
       return {
         label: "Premium · Subscription",
         Glyph: Crown,
-        glyphClass: "bg-[#f0c860] text-[#3a2a08]",
+        glyphClass: "bg-amber-300 text-amber-950",
       };
   }
 }
@@ -68,8 +67,20 @@ function formatFollowers(n: number): string {
   return String(n);
 }
 
-export function MyQrCard({ code, name }: { code: string; name?: string }) {
-  const displayCode = displayConsumerCode(code);
+export function MyQrCard({
+  code,
+  name,
+  // City / region shown on the card header. Passed by the caller so a second
+  // launch city doesn't require a code change; defaults to the Monterrey
+  // launch market.
+  region = "MX · MTY",
+}: {
+  code: string;
+  name?: string;
+  region?: string;
+}) {
+  const hasCode = Boolean(code && code.trim());
+  const displayCode = hasCode ? displayConsumerCode(code) : "";
   const consumerClass = useConsumerClass();
   const { label, Glyph, glyphClass } = classPresentation(consumerClass);
   const displayName = name?.trim() || "Mesita member";
@@ -90,44 +101,62 @@ export function MyQrCard({ code, name }: { code: string; name?: string }) {
   return (
     <div className="space-y-5">
       {/* Passport card */}
-      <section className="overflow-hidden rounded-[28px] bg-[linear-gradient(150deg,#0f0a26_0%,#1a1140_58%,#2b1a5c_100%)] p-5 text-white shadow-[0_24px_60px_-24px_rgba(15,10,40,0.55)]">
+      <section className="bg-passport overflow-hidden rounded-[28px] p-5 text-white shadow-[0_24px_60px_-24px_rgba(15,10,40,0.55)]">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <span className="text-[10px] font-bold tracking-[0.25em] text-white/60 uppercase">
+          <span className="text-[10px] font-bold tracking-[0.25em] text-white/75 uppercase">
             Mesita Card
           </span>
-          <span className="font-mono text-[10px] tracking-[0.2em] text-white/40">
-            MX · MTY
+          <span className="font-mono text-[10px] tracking-[0.2em] text-white/60">
+            {region}
           </span>
         </div>
 
-        {/* QR */}
-        <div className="mx-auto mt-5 w-full max-w-[260px] rounded-3xl bg-white p-4">
-          <QRCodeSVG
-            value={`mesita:${displayCode}`}
-            size={260}
-            className="h-auto w-full"
-            bgColor="#ffffff"
-            fgColor="#0f0a26"
-            level="M"
-            marginSize={0}
-          />
-        </div>
+        {/* QR — or a graceful fallback when the server code hasn't loaded. The
+            QR is the whole point of the card, so a missing code gets an
+            explicit state instead of silently encoding an empty value. */}
+        {hasCode ? (
+          <div
+            role="img"
+            aria-label={`Your Mesita QR code, ${displayCode}`}
+            className="mx-auto mt-5 w-full max-w-[260px] rounded-3xl bg-white p-4"
+          >
+            <QRCodeSVG
+              value={`mesita:${displayCode}`}
+              size={260}
+              className="h-auto w-full"
+              bgColor="#ffffff"
+              fgColor="#0f0a26"
+              level="M"
+              marginSize={0}
+              title={`Your Mesita QR code, ${displayCode}`}
+            />
+          </div>
+        ) : (
+          <div className="mx-auto mt-5 grid aspect-square w-full max-w-[260px] place-items-center rounded-3xl border border-dashed border-white/20 bg-white/5 px-6 text-center">
+            <p className="text-[13px] leading-relaxed text-white/80">
+              Your code isn&apos;t ready yet. Reload this tab in a moment — if it
+              keeps happening, contact support.
+            </p>
+          </div>
+        )}
 
         {/* Code */}
-        <button
-          type="button"
-          onClick={onCopy}
-          aria-label={copied ? "Code copied" : "Copy code"}
-          className="mx-auto mt-4 flex w-full max-w-[260px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 py-2 font-mono text-sm font-semibold tracking-[0.3em] text-white transition active:scale-[0.99]"
-        >
-          {displayCode}
-          {copied ? (
-            <Check className="size-3.5 text-white/70" />
-          ) : (
-            <Copy className="size-3.5 text-white/50" />
-          )}
-        </button>
+        {hasCode ? (
+          <button
+            type="button"
+            onClick={onCopy}
+            aria-label={copied ? "Code copied" : `Copy code ${displayCode}`}
+            className="mx-auto mt-4 flex w-full max-w-[260px] items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 py-2 font-mono text-sm font-semibold tracking-[0.3em] text-white transition active:scale-[0.99]"
+          >
+            {displayCode}
+            {copied ? (
+              <Check className="size-3.5 text-white/80" />
+            ) : (
+              <Copy className="size-3.5 text-white/70" />
+            )}
+          </button>
+        ) : null}
 
         {/* Identity strip */}
         <div className="mt-6 flex items-center gap-3 border-t border-white/10 pt-4">
@@ -136,7 +165,7 @@ export function MyQrCard({ code, name }: { code: string; name?: string }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-bold">{displayName}</p>
-            <p className="text-[10px] font-semibold tracking-widest text-white/60 uppercase">
+            <p className="text-[10px] font-semibold tracking-widest text-white/75 uppercase">
               {label}
               {isInstagram && consumerClass.followers > 0
                 ? ` · ${formatFollowers(consumerClass.followers)} followers`
@@ -152,7 +181,7 @@ export function MyQrCard({ code, name }: { code: string; name?: string }) {
       </section>
 
       {/* Helper caption */}
-      <p className="text-muted-foreground px-6 text-center text-[12px] leading-snug">
+      <p className="text-foreground/70 px-6 text-center text-[13px] leading-snug">
         Show this when you ask for the check. Staff scan the QR or type your
         8-digit code in WhatsApp or their console.
       </p>
@@ -168,8 +197,8 @@ export function MyQrCard({ code, name }: { code: string; name?: string }) {
           </span>
           <div className="min-w-0 flex-1">
             <p className="text-foreground text-sm font-bold">Unlock Premium</p>
-            <p className="text-muted-foreground text-[11px]">
-              Bigger discounts and Type B rewards — free with Instagram.
+            <p className="text-muted-foreground text-[12px]">
+              Bigger discounts and bonus rewards — free with Instagram.
             </p>
           </div>
           <span className="bg-tier-premium shrink-0 rounded-full px-3 py-1.5 text-[10px] font-bold tracking-widest text-white uppercase">
