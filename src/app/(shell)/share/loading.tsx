@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/shared";
 
-// /share (Invite) Suspense fallback. Invite was the last bottom-nav surface
+// /share Suspense fallback. Share was the last bottom-nav surface
 // still falling through to the shell-level LoadingFill spinner; mirror its
 // silhouette — five standard-size gift cards (eyebrow + Share pill on top,
 // title + line at the bottom) — so it skeleton-loads like Home / Search /

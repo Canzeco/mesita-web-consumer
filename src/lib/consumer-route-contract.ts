@@ -4,10 +4,9 @@
 
 export const CONSUMER_ROUTES = {
   onboard: "/onboard",
-  // The referral page is named Invite — the mechanic is person-to-person
-  // (gift cards, friends who joined), so the page is the noun and "share"
-  // is only the action on it. /share is the legacy path (redirects here).
-  invite: "/invite",
+  // The referral page is named Share — /share is canonical. /invite is the
+  // legacy path (redirects here).
+  share: "/share",
   // Discovery hub (Swipe / Social / Favorites modes are client state, not routes).
   home: "/home",
   // Map + catalog search + Ask AI concierge (panels are client state, not routes).
@@ -41,7 +40,7 @@ export const CONSUMER_ROUTES = {
   },
   legacy: {
     profile: "/profile",
-    share: "/share",
+    invite: "/invite",
     mePlan: "/me/plan",
     notifications: "/notifications",
     inboxMine: "/inbox/my-activity",

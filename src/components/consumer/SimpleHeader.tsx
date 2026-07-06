@@ -4,7 +4,7 @@ import { Share2 } from "lucide-react";
 import { ClassChip } from "./ClassChip";
 import { CONSUMER_ROUTES } from "@/lib/consumer-route-contract";
 
-// Shared header for Saved, QR, Inbox, Me (profile), Invite, Reservations, etc.
+// Shared header for Saved, QR, Inbox, Me (profile), Share, Reservations, etc.
 // SimpleHeader is the default top chrome for most shell routes.
 //
 //   share — [Logo] · title (true center) · [Share][Plan] — share overlays, not in flow
@@ -43,8 +43,8 @@ export function SimpleHeader({
 
       {isShare ? (
         <Link
-          href={CONSUMER_ROUTES.invite}
-          aria-label="Invite friends"
+          href={CONSUMER_ROUTES.share}
+          aria-label="Share"
           className="border-border bg-card text-foreground/70 hover:bg-muted absolute top-1/2 right-[calc(1rem+2.5rem+0.5rem)] z-10 flex h-10 w-10 shrink-0 -translate-y-1/2 items-center justify-center rounded-2xl border transition active:scale-[0.98]"
         >
           <Share2 className="h-5 w-5" />
