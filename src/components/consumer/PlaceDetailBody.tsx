@@ -217,33 +217,33 @@ function SummaryHeader({ place }: { place: PlaceDetail }) {
         <OverviewChip>{formatPerPersonPrice(place.price_range)}</OverviewChip>
         <OverviewChip
           icon={Star}
-          iconClass="text-amber-400 fill-amber-400"
+          iconClass="text-amber-500 fill-amber-500"
           iconStrokeWidth={0}
         >
           {googleRating}
-          <span className="text-white/70">
+          <span className="text-muted-foreground">
             ({formatCount(place.google.count, false)})
           </span>
         </OverviewChip>
-        <OverviewChip icon={Instagram} iconClass="text-pink-200/80">
+        <OverviewChip icon={Instagram} iconClass="text-pink-500">
           {igFollowers}
-          <span className="text-white/70">followers</span>
+          <span className="text-muted-foreground">followers</span>
         </OverviewChip>
         <OverviewChip
           icon={Clock}
-          iconClass={place.open_now ? "text-emerald-400" : "text-white/70"}
+          iconClass={place.open_now ? "text-emerald-600" : "text-muted-foreground"}
         >
           {statusValue}
         </OverviewChip>
-        <OverviewChip icon={Navigation} iconClass="text-white/70">
+        <OverviewChip icon={Navigation} iconClass="text-muted-foreground">
           {place.distance_km} km
         </OverviewChip>
-        <OverviewChip icon={MapPin} iconClass="text-white/70">
+        <OverviewChip icon={MapPin} iconClass="text-muted-foreground">
           {place.zone}
         </OverviewChip>
         <OverviewChip
           icon={isPartner ? BadgeCheck : ShieldAlert}
-          iconClass={isPartner ? "fill-sky-500 text-white" : "text-amber-300"}
+          iconClass={isPartner ? "fill-sky-500 text-white" : "text-amber-500"}
         >
           {isPartner ? "Verified Partner" : "Not Verified"}
         </OverviewChip>
@@ -271,13 +271,13 @@ function OverviewChip({
   return (
     <span
       className={cn(
-        "inline-flex max-w-full items-center gap-1.5 rounded-md border border-white/35 bg-black/45 px-3 py-1.5 text-[15px] leading-tight font-semibold whitespace-nowrap text-white tabular-nums [font-variant-numeric:tabular-nums_lining-nums] backdrop-blur-md",
+        "inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-card px-3 py-1.5 text-[15px] leading-tight font-semibold whitespace-nowrap text-foreground tabular-nums [font-variant-numeric:tabular-nums_lining-nums]",
         capitalize && "capitalize",
       )}
     >
       {Icon && (
         <Icon
-          className={cn("h-4 w-4 shrink-0", iconClass ?? "text-white/80")}
+          className={cn("h-4 w-4 shrink-0", iconClass ?? "text-muted-foreground")}
           strokeWidth={iconStrokeWidth}
         />
       )}
