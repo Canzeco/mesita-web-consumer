@@ -100,7 +100,7 @@ export function PlaceDetailBody({ place }: { place: PlaceDetail }) {
         <LinksBox place={place} />
       </SectionAnchor>
       <SectionAnchor id="details">
-        <DetailsBox place={place} />
+        <TagsBox place={place} />
       </SectionAnchor>
       <OwnershipClaimBox place={place} />
     </div>
@@ -1011,7 +1011,7 @@ function RewardCell({
 
 // ── 9. About lives in @/components/consumer/AboutBox (client). ──────────
 
-// ── 10. Details ─────────────────────────────────────────────────────────
+// ── 10. Tags ────────────────────────────────────────────────────────────
 
 const CHANNEL_DEFS = [
   { key: "website_url", label: "Website", Icon: Globe },
@@ -1143,39 +1143,16 @@ function TagChips({ tags }: { tags: PlaceDetail["tags"] }) {
   );
 }
 
-function DetailsBox({ place }: { place: PlaceDetail }) {
-  // Just the essentials a guest decides on — dining style, dress code,
-  // reservations, payment, parking, and what it's good for. The long lists
-  // (amenities, accessibility, dietary, languages) and platform meta were
-  // noise on this surface; category and zone already show at the top.
-  const d = place.details;
-  const rows: Array<[string, string]> = [
-    ["Dining style", d.dining_style],
-    ["Dress code", d.dress_code],
-    ["Reservations", d.reservations],
-    ["Payment", d.payment_methods.join(" · ")],
-    ["Parking", d.parking],
-    ["Good for", d.good_for.join(" · ")],
-  ];
+function TagsBox({ place }: { place: PlaceDetail }) {
+  // Tags only — the curated taxonomy chip cluster (one tint per facet).
+  // The old key/value rows (dining style, dress code, reservations,
+  // payment, parking, good for) were noise here; those facts are being
+  // absorbed into the tag vocabulary itself (Atlas taxonomy v2). The
+  // whole box disappears when the place has no tags.
+  if (place.tags.length === 0) return null;
   return (
-    <Box title="Details" icon={Tags} iconColor="text-pink-400">
-      {/* Curated taxonomy chips lead the box — a premium, differentiated
-          chip cluster (one tint per facet) above the key/value essentials.
-          Renders nothing when the place has no tags. */}
+    <Box title="Tags" icon={Tags} iconColor="text-pink-400">
       <TagChips tags={place.tags} />
-      <dl className="flex flex-col gap-3">
-        {rows.map(([label, value]) => (
-          <div
-            key={label}
-            className="flex items-baseline justify-between gap-4"
-          >
-            <dt className="text-muted-foreground text-sm">{label}</dt>
-            <dd className="text-foreground text-right text-sm font-medium">
-              {value}
-            </dd>
-          </div>
-        ))}
-      </dl>
     </Box>
   );
 }
