@@ -67,14 +67,18 @@ export function AiConnectModal({
     }
   }, [supabase]);
 
+  // Load active tokens when the sheet opens. Fresh plaintext lives only in
+  // this mount cycle — closing the sheet unmounts LocalSheet content via
+  // `open`, and we clear `fresh` on the next mint instead of in an effect
+  // (react-hooks/set-state-in-effect).
   useEffect(() => {
     if (!open) return;
-    setFresh(null);
     void refresh();
   }, [open, refresh]);
 
   async function mint() {
     setMinting(true);
+    setFresh(null);
     try {
       const token = await apiCreateMcpToken(supabase, "AI client");
       setFresh(token);
